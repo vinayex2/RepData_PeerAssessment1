@@ -6,20 +6,44 @@ output:
 ---
 
 
-## Loading and preprocessing the data
+Reading the CSV file
 
+```{r,echo=TRUE}
+activity<-read.csv("activity.csv",header=TRUE)
+```
 
+Filtering NA into another datachunk
 
-## What is mean total number of steps taken per day?
+```{r,echo=false}
+filter<-activity[!is.na(activity$steps),]
+```
 
+Loading Dplyr package for data manipulation
+```{r}
+library(dplyr)
+```
+Grouping daily in datachunk and calculating mean
+```{r}
+daily<-filter%>%group_by(date)%>%summarise(mean)
+meanofdaily<-summarise(daily,means=mean(steps),medians=median(steps))
+```
+Plotting Histogram for Daily steps
+```{r,echo=TRUE}
+hist(x=meanofdaily$means)
+```
+Mean and Median for Daily steps
+```{r}
+meanofdaily
+```
+Plot Average Daily steps taken over the period
+```{r,echo=TRUE}
+plot(x=meanofdaily$date,y=meanofdaily$means,pch=19)
+```
 
+Find Interval for which Maximum steps taken on an average
+```{r}
+maxsteps<-summarise(daily,mx=max(steps))
+```
 
-## What is the average daily activity pattern?
+Filling NA Values based on daily means will help us get get the full dataset
 
-
-
-## Imputing missing values
-
-
-
-## Are there differences in activity patterns between weekdays and weekends?
