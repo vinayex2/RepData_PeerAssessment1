@@ -1,10 +1,9 @@
 ---
-title: "Reproducible Research: Peer Assessment 1"
-output: 
-  html_document:
-    keep_md: true
+title: 'Assigment 1 : Reproducible'
+author: "Vinay Tyagi"
+date: "Sunday, March 15, 2015"
+output: html_document
 ---
-
 
 Reading the CSV file
 
@@ -14,17 +13,17 @@ activity<-read.csv("activity.csv",header=TRUE)
 
 Filtering NA into another datachunk
 
-```{r,echo=false}
+```{r,echo=TRUE}
 filter<-activity[!is.na(activity$steps),]
 ```
 
 Loading Dplyr package for data manipulation
-```{r}
+```{r,echo=TRUE}
 library(dplyr)
 ```
 Grouping daily in datachunk and calculating mean
-```{r}
-daily<-filter%>%group_by(date)%>%summarise(mean)
+```{r,echo=TRUE}
+daily<-filter%>%group_by(date)
 meanofdaily<-summarise(daily,means=mean(steps),medians=median(steps))
 ```
 Plotting Histogram for Daily steps
@@ -32,18 +31,79 @@ Plotting Histogram for Daily steps
 hist(x=meanofdaily$means)
 ```
 Mean and Median for Daily steps
-```{r}
+```{r,echo=TRUE}
 meanofdaily
 ```
 Plot Average Daily steps taken over the period
 ```{r,echo=TRUE}
-plot(x=meanofdaily$date,y=meanofdaily$means,pch=19)
+plot(x=meanofdaily$date,y=meanofdaily$means,pch=19,type = "l")
 ```
 
 Find Interval for which Maximum steps taken on an average
-```{r}
-maxsteps<-summarise(daily,mx=max(steps))
+```{r,echo=TRUE}
+maxintrvl<-daily %>% filter(steps == max(steps)) %>% select(interval,steps)
+maxintrvl
 ```
 
 Filling NA Values based on daily means will help us get get the full dataset
+```{r,echo=TRUE}
+activity2<-activity
+activity2<-activity2 %>% group_by(date) %>% mutate(means = mean(steps,na.rm=TRUE))
+for(i in 1:nrow(activity2))
+  {
+    if(is.na(activity2$steps[i]))
+      {
+      if(is.na(activity2$means[i]))
+        {
+          activity2$steps[i] <- 0
+        }
+      else 
+        {
+          activity2$steps[i] <- activity2$means[i]
+        }
+      
+      }
+  }
+daily2<-activity2%>%group_by(date)
+meanofdaily2<-summarise(daily2,means=mean(steps),medians=median(steps))
+```
+Plotting Histogram for Daily steps
+```{r,echo=TRUE}
+hist(x=meanofdaily2$means)
+```
+Mean and Median for Daily steps
+```{r,echo=TRUE}
+meanofdaily2
+```
+Plot Average Daily steps taken over the period
+```{r,echo=TRUE}
+plot(x=meanofdaily2$date,y=meanofdaily2$means,pch=19,type = "l")
+```
 
+Difference in weekdays and Weekend (Week days in Red and Weekend in Black)
+```{r,echo=TRUE}
+activity3<-activity2
+activity3$weekend <- ""
+for(i in 1:nrow(activity3))
+{
+
+  if((weekdays(x = as.Date(as.character(activity3[i,]$date))) %in% c("Saturday","Sunday")))
+    { 
+      activity3[i,]$weekend <- "weekend"
+    } 
+  else
+    activity3[i,]$weekend <- "weekday"
+}
+
+activity3$weekend = as.factor(activity3$weekend)
+
+activity3<-activity3 %>% group_by(interval,weekend) %>% summarise(means = mean(steps))
+```
+
+Plot for Average Interval over Weekdays and Weekends
+```{r,echo=TRUE}
+par(mfrow = c(2,1))
+library(lattice)
+xyplot(means~interval|levels(activity3$weekend) , data = activity3,xlab = "Steps")
+
+```
